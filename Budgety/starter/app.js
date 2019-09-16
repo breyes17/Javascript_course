@@ -24,7 +24,7 @@ let BUDGETcontroller = (function(){
         percentage : -1
     }
 
-    let calculateBudget = function(type){
+    let calculateTotal = function(type){
         let sum = 0;
         data.allItems[type].forEach(x => {
             sum += x.value;
@@ -52,16 +52,21 @@ let BUDGETcontroller = (function(){
 
             return dataArr;
         },
-        getBudget : function(){
+        calculateBudget : function(){
             // 1. calculate the budget for income and expenses
-            calculateBudget('exp');
-            calculateBudget('inc');
+            calculateTotal('exp');
+            calculateTotal('inc');
 
             // 2. calculate the budget
             data.budget = data.totals.inc - data.totals.exp;
 
             // 3. calculate the percentage
-            data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+            if(data.totals.inc > 0){
+                data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+            } else {
+                data.percentage = -1;
+            }
+            
         },
         returnBudget : function(){
             return {
@@ -87,7 +92,13 @@ let UIcontroller = (function(){
         domValue : '.add__value',
         domBtn : '.add__btn',
         expenseContainer : '.expenses__list',
-        incomeContainer : '.income__list'
+        incomeContainer : '.income__list',
+        Income : '.budget__income--value',
+        Expenses : '.budget__expenses--value',
+        Percentage : '.budget__expenses--percentage',
+        Budget : '.budget__value',
+        month : '.budget__title--month',
+        container : '.container'
     }
     
     return{
@@ -105,7 +116,7 @@ let UIcontroller = (function(){
             let html, newHtml, element;
             if(type === 'inc'){
                 element = DOMstrings.incomeContainer;
-                html = `<div class="item clearfix" id="income-%id%">
+                html = `<div class="item clearfix" id="inc-%id%">
                     <div class="item__description">%description%</div>
                     <div class="right clearfix">
                         <div class="item__value">+ %value%</div>
@@ -116,7 +127,7 @@ let UIcontroller = (function(){
                     </div>`;
             } else {
                 element = DOMstrings.expenseContainer;
-                html = `<div class="item clearfix" id="expense-%id%">
+                html = `<div class="item clearfix" id="add-%id%">
                     <div class="item__description">%description%</div>
                     <div class="right clearfix">
                         <div class="item__value">- %value%</div>
@@ -135,6 +146,26 @@ let UIcontroller = (function(){
             document.querySelector(element).insertAdjacentHTML('beforeend',newHtml);
 
         },
+        displayBudget : function(obj){
+            // budget
+            if(obj.budget > 0){
+                document.querySelector(DOMstrings.Budget).textContent = '+ '+obj.budget;
+            } else {
+                document.querySelector(DOMstrings.Budget).textContent = 0;
+            }
+
+            // expenses
+            document.querySelector(DOMstrings.Expenses).textContent = '- '+obj.totalExp;
+            // income
+            document.querySelector(DOMstrings.Income).textContent = '+ '+obj.totalInc;
+
+            // percentage
+            if(obj.percentage <= 0 ){
+                obj.percentage = 0;
+            }
+            document.querySelector(DOMstrings.Percentage).textContent = obj.percentage + '%';
+        },
+
         clearFields : function(){
             let fields, fieldsArr;
 
@@ -147,6 +178,12 @@ let UIcontroller = (function(){
             });
 
             fieldsArr[0].focus();
+        },
+        displayMonths : function(){
+            let n = new Date().getMonth();
+            let months = ['January', 'February', 'March', 'April' , 'May', 'June', 'July', 'August',
+                            'September', 'October', 'November' ,'December'];
+            return months[n]      
         }
     }
 })();
@@ -165,6 +202,15 @@ let controller = (function(bdgtctrl,uictrl){
                 ctrlAdditem();
             }
         });
+
+        document.querySelector(dom.container).addEventListener('click',ctrDeleteItem);
+    }
+
+
+    let updateBudget = function(){
+        BUDGETcontroller.calculateBudget();
+        let bg = BUDGETcontroller.returnBudget()
+        uictrl.displayBudget(bg);
     }
     
     let ctrlAdditem = function(){
@@ -174,14 +220,32 @@ let controller = (function(bdgtctrl,uictrl){
         if(data.description !== "" && !isNaN(data.value) && data.value > 0){
             newItem = bdgtctrl.insertBudget(data.type,data.description,data.value);
             uictrl.addListItem(newItem,data.type);
+            updateBudget();
             uictrl.clearFields();
         }
 
     }
 
+    let ctrDeleteItem = function(event){
+        let item,idSplit;
+        item = event.target.parentNode.parentNode.parentNode.parentNode.id;
+
+        if(item){
+            idSplit = item.split('-');
+            console.log(idSplit)
+        }
+    }
+
     return{
         init: function(){
             console.log('Application has started');
+            document.querySelector(uictrl.getDom().month).textContent = uictrl.displayMonths();
+            uictrl.displayBudget({
+                budget: 0,
+                totalInc : 0,
+                totalExp : 0,
+                percentage : -1
+            })
             setupEventListener();
         }
     }
