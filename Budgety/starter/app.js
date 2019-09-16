@@ -77,6 +77,16 @@ let BUDGETcontroller = (function(){
             }
 
         },
+        deleteItem : function(type, id){
+            let ids,indexID;
+
+            ids = data.allItems[type].map((x) => x.id);
+            indexID = ids.indexOf(id);
+            if(ids !== -1){
+                data.allItems[type].splice(indexID,1);
+            }
+        },
+
         testing: function(){
             return data;
         }
@@ -184,6 +194,10 @@ let UIcontroller = (function(){
             let months = ['January', 'February', 'March', 'April' , 'May', 'June', 'July', 'August',
                             'September', 'October', 'November' ,'December'];
             return months[n]      
+        },
+        deleteListItem : function(selectorID){
+            let el = document.getElementById(selectorID);
+            el.parentNode.removeChild(el);
         }
     }
 })();
@@ -227,12 +241,16 @@ let controller = (function(bdgtctrl,uictrl){
     }
 
     let ctrDeleteItem = function(event){
-        let item,idSplit;
+        let item,idSplit,type,id;
         item = event.target.parentNode.parentNode.parentNode.parentNode.id;
 
         if(item){
             idSplit = item.split('-');
-            console.log(idSplit)
+            type = idSplit[0];
+            id = parseInt(idSplit[1],10);
+            BUDGETcontroller.deleteItem(type,id);
+            uictrl.deleteListItem(item);
+            updateBudget();
         }
     }
 
