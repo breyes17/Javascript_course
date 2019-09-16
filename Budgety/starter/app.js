@@ -127,7 +127,7 @@ let UIcontroller = (function(){
                     </div>`;
             } else {
                 element = DOMstrings.expenseContainer;
-                html = `<div class="item clearfix" id="add-%id%">
+                html = `<div class="item clearfix" id="exp-%id%">
                     <div class="item__description">%description%</div>
                     <div class="right clearfix">
                         <div class="item__value">- %value%</div>
