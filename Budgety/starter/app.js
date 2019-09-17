@@ -98,7 +98,7 @@ let BUDGETcontroller = (function(){
         deleteItem : function(type, id){
             let ids,indexID;
 
-            ids = data.allItems[type].map((x) => x.id);
+            ids = data.allItems[type].map(x => x.id);
             indexID = ids.indexOf(id);
             if(ids !== -1){
                 data.allItems[type].splice(indexID,1);
@@ -129,6 +129,27 @@ let UIcontroller = (function(){
         container : '.container',
         expPercentageLabel : '.item__percentage'
     }
+
+    let stringFormat = function(num, type){
+        let numSplit,w,dec;
+        num = Math.abs(num);
+        num = num.toFixed(2);
+        numSplit = num.split('.');
+        w = numSplit[0];
+        dec = numSplit[1];
+
+        // 2345, 12345
+        if(w.length > 3){
+            w = w.substr(0,w.length - 3) +','+w.substr(w.length-3 , w.length);
+        }
+        return (type === 'exp' ? '-' : '+') + w +'.'+dec;
+    }
+
+    let nodeListfoEach = function(list, callback){
+        for(var i=0; i<list.length; i++){
+            callback(list[i], i);
+        }
+    }
     
     return{
         getValues : function(){
@@ -148,7 +169,7 @@ let UIcontroller = (function(){
                 html = `<div class="item clearfix" id="inc-%id%">
                     <div class="item__description">%description%</div>
                     <div class="right clearfix">
-                        <div class="item__value">+ %value%</div>
+                        <div class="item__value">%value%</div>
                         <div class="item__delete">
                             <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
                         </div>
@@ -159,7 +180,7 @@ let UIcontroller = (function(){
                 html = `<div class="item clearfix" id="exp-%id%">
                     <div class="item__description">%description%</div>
                     <div class="right clearfix">
-                        <div class="item__value">- %value%</div>
+                        <div class="item__value">%value%</div>
                         <div class="item__percentage">21%</div>
                         <div class="item__delete">
                             <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
@@ -170,7 +191,7 @@ let UIcontroller = (function(){
 
             newHtml = html.replace('%id%',obj.id);
             newHtml = newHtml.replace('%description%',obj.description);
-            newHtml = newHtml.replace('%value%',obj.value);
+            newHtml = newHtml.replace('%value%',stringFormat(obj.value, type));
 
             document.querySelector(element).insertAdjacentHTML('beforeend',newHtml);
 
@@ -178,15 +199,15 @@ let UIcontroller = (function(){
         displayBudget : function(obj){
             // budget
             if(obj.budget > 0){
-                document.querySelector(DOMstrings.Budget).textContent = '+ '+obj.budget;
+                document.querySelector(DOMstrings.Budget).textContent = stringFormat(obj.budget,'inc');
             } else {
                 document.querySelector(DOMstrings.Budget).textContent = 0;
             }
 
             // expenses
-            document.querySelector(DOMstrings.Expenses).textContent = '- '+obj.totalExp;
+            document.querySelector(DOMstrings.Expenses).textContent = stringFormat(obj.totalExp,'exp');
             // income
-            document.querySelector(DOMstrings.Income).textContent = '+ '+obj.totalInc;
+            document.querySelector(DOMstrings.Income).textContent = stringFormat(obj.totalInc,'inc');
 
             // percentage
             if(obj.percentage <= 0 ){
@@ -212,7 +233,8 @@ let UIcontroller = (function(){
             let n = new Date().getMonth();
             let months = ['January', 'February', 'March', 'April' , 'May', 'June', 'July', 'August',
                             'September', 'October', 'November' ,'December'];
-            return months[n]      
+            // return months[n]
+            document.querySelector(DOMstrings.month).textContent = months[n]
         },
         deleteListItem : function(selectorID){
             let el = document.getElementById(selectorID);
@@ -221,19 +243,25 @@ let UIcontroller = (function(){
         displayPercentages : function(percentages){
             let fields = document.querySelectorAll(DOMstrings.expPercentageLabel);
 
-            let nodeListfoEach = function(list, callback){
-                for(var i=0; i<list.length; i++){
-                    callback(list[i], i);
-                }
-            }
-
             nodeListfoEach(fields,function(curr, index){
                 if(percentages[index] > 0){
                     curr.textContent = percentages[index] + '%';
                 } else {
-                    curr.textContent = percentages[index] + '---';
+                    curr.textContent = '---';
                 }
             })
+        },
+        changeDisplay : function(){
+            let fields = document.querySelectorAll(
+                DOMstrings.domType +','+
+                DOMstrings.domDescription +','+
+                DOMstrings.domValue
+            )
+
+            nodeListfoEach(fields,function(cur){
+                cur.classList.toggle('red-focus');
+            })
+            document.querySelector(DOMstrings.domBtn).classList.toggle('red');
         }
     }
 })();
@@ -254,6 +282,7 @@ let controller = (function(bdgtctrl,uictrl){
         });
 
         document.querySelector(dom.container).addEventListener('click',ctrDeleteItem);
+        document.querySelector(uictrl.getDom().domType).addEventListener('change',uictrl.changeDisplay);
     }
 
 
@@ -301,7 +330,7 @@ let controller = (function(bdgtctrl,uictrl){
     return{
         init: function(){
             console.log('Application has started');
-            document.querySelector(uictrl.getDom().month).textContent = uictrl.displayMonths();
+            uictrl.displayMonths();
             uictrl.displayBudget({
                 budget: 0,
                 totalInc : 0,
