@@ -236,7 +236,12 @@ let controller = (function(bdgtctrl,uictrl){
             uictrl.addListItem(newItem,data.type);
             updateBudget();
             uictrl.clearFields();
+            updatePercentages()
         }
+
+    }
+
+    let updatePercentages = function(){
 
     }
 
@@ -251,6 +256,7 @@ let controller = (function(bdgtctrl,uictrl){
             BUDGETcontroller.deleteItem(type,id);
             uictrl.deleteListItem(item);
             updateBudget();
+            updatePercentages()
         }
     }
 
